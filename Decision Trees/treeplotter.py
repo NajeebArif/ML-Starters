@@ -5,12 +5,16 @@ g_leaf_node = dict(boxstyle="round4", fc="0.8")
 g_arrow_args = dict(arrowstyle="<-")
 
 
-def create_plot():
+def create_plot(p_in_tree):
     l_fig = plt.figure(1, facecolor='white')
     l_fig.clf()
-    create_plot.ax1 = plt.subplot(111, frameon=False)
-    plot_node('a decision node', (0.5, 0.1), (0.1, 0.5), g_decision_node)
-    plot_node('a leaf node', (0.8, 0.1), (0.3, 0.8), g_leaf_node)
+    l_ax_props = dict(xticks=[], yticks=[])
+    create_plot.ax1 = plt.subplot(111, frameon=False, **l_ax_props)
+    plot_tree.totalW = float(get_num_leafs(p_in_tree))
+    plot_tree.totalD = float(get_tree_depth(p_in_tree))
+    plot_tree.xOff = -0.5/plot_tree.totalW
+    plot_tree.yOff = 1.0
+    plot_tree(p_in_tree, (0.5, 1.0), '')
     plt.show()
 
 
@@ -55,3 +59,27 @@ def retrieve_tree(i):
                       }]
     return list_of_trees[i]
 
+
+def plot_mid_text(p_center_pt, p_parent_pt, p_txt_string):
+    l_x_mid = (p_parent_pt[0] - p_center_pt[0])/2.0 + p_center_pt[0]
+    l_y_mid = (p_parent_pt[1] - p_center_pt[0])/2.0 + p_center_pt[1]
+    create_plot.ax1.text(l_x_mid, l_y_mid, p_txt_string)
+
+
+def plot_tree(p_my_tree, p_parent_pt, p_node_txt):
+    l_num_leafs = get_num_leafs(p_my_tree)
+    get_tree_depth(p_my_tree)
+    l_first_str = list(p_my_tree.keys())[0]
+    l_center_pt = (plot_tree.xOff + (1.0 + float(l_num_leafs))/2.0/plot_tree.totalW, plot_tree.yOff)
+    plot_mid_text(l_center_pt, p_parent_pt, p_node_txt)
+    plot_node(l_first_str, l_center_pt, p_parent_pt, g_decision_node)
+    l_second_dict = p_my_tree[l_first_str]
+    plot_tree.yOff = plot_tree.yOff - 1.0/plot_tree.totalD
+    for key in l_second_dict.keys():
+        if type(l_second_dict[key]).__name__ == 'dict':
+            plot_tree(l_second_dict[key], l_center_pt, str(key))
+        else:
+            plot_tree.xOff = plot_tree.xOff + 1.0/plot_tree.totalW
+            plot_node(l_second_dict[key], (plot_tree.xOff, plot_tree.yOff), l_center_pt, g_leaf_node)
+            plot_mid_text((plot_tree.xOff, plot_tree.yOff), l_center_pt, str(key))
+    plot_tree.yOff = plot_tree.yOff + 1.0/plot_tree.totalD
